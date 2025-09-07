@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Binary Four Hands Widget</title>
+  <style>
+    :root{ --stroke:#000; --fill:#fff; --c0:#2563eb; --c1:#10b981; --c2:#f59e0b; --c3:#ef4444; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#111;display:flex;flex-direction:column}
+
+    .wrap{inline-size:100%; block-size:100%; display:flex; flex-direction:column; gap:.75rem; padding:1rem}
+
+    /* Single row of four */
+    .hands{display:flex; flex-wrap:nowrap; gap:.5rem; align-items:flex-start; justify-content:center}
+    .handwrap{flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:.35rem; background:#fff; border-radius:12px; padding:.25rem}
+
+    /* Color strokes per hand */
+    .h0 svg path{ stroke: var(--c0); }
+    .h1 svg path{ stroke: var(--c1); }
+    .h2 svg path{ stroke: var(--c2); }
+    .h3 svg path{ stroke: var(--c3); }
+
+    /* Bit line above each hand */
+    .bit{font-weight:700; font-size:clamp(16px,3.5vw,28px); line-height:1.15}
+    .h0 .power{ color: var(--c0); }
+    .h1 .power{ color: var(--c1); }
+    .h2 .power{ color: var(--c2); }
+    .h3 .power{ color: var(--c3); }
+
+    /* SVG sizing: keep all four visible on one row
+    svg.hand{width:auto;height:clamp(170px,26vh,320px);stroke-width:3.5;background:#fff;border-radius:8px}
+    */
+    svg.hand{
+      inline-size:clamp(90px, 22vw, 180px);
+      block-size:auto;
+      aspect-ratio:239/360;
+      border-radius: 8px;
+      stroke-width: 3.5px;
+      background:#fff
+    }
+
+    .finger{cursor:pointer}
+    /* .finger.disabled{cursor:not-allowed; opacity:.5} */
+    .finger.disabled{opacity:.5}
+    /* Show extended when true, closed otherwise */
+    .isExtended :nth-child(1){opacity:0}
+    .isClosed   :nth-child(2){opacity:0}
+
+    svg path{fill:var(--fill)}
+  .sumline{font:700 clamp(16px,3.5vw,28px)/1.15 ui-monospace, SFMono-Regular, Menlo, monospace; text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main id="app" class="hands" aria-label="hands"></main>
+    <div id="total" class="sumline">(0000)<sub>2</sub> = 0</div>
+  </div>
+
+  <script type="module">
+    // ====== Data ======
+    const FINGERS = ["thumb", "index", "middle", "ring", "little"]; // left logical order
+    const FINGERS_R = [...FINGERS].reverse(); // right path order used by paths
+
+    const fingerPaths = {
+      thumb: [
+        "M73.935 316.755a415.412 415.412 0 00-4.526-4.459 109.184 109.184 0 01-30.405-53.451c-5.355-22.6-11.497-48.632-12.534-53.028a5.012 5.012 0 00-.468-1.229L7.435 170.239a1.505 1.505 0 01-.023-1.386 1.505 1.505 0 011.121-.814h.004a30.123 30.123 0 0128.568 11.716l10.108 13.477 19.139 22.591s62.451 14.252 62.451 60.087",
+        "M73.935 316.763a662.15 662.15 0 00-1.2-1.196 109.207 109.207 0 01-31.222-62.27c-.805-5.676-1.614-11.41-2.375-16.801a27.81 27.81 0 0124.621-31.539l12.172-1.283 17.329-2.599a2.765 2.765 0 013.115 2.156v.001a26.448 26.448 0 01-11.127 27.503l-12.504 8.388s56.059-9.04 56.059 36.795",
+      ],
+      index: [
+        "M66.631 187.095L59.66 74.688a5.001 5.001 0 013.58-5.106l7.805-2.295a4.996 4.996 0 016.335 3.932l18.129 103.337.033.116",
+        "M101.336 167.973a10 10 0 00-5.256-7.887l-5.279-2.81a14.999 14.999 0 00-19.082 4.284l-4.349 5.843a9.999 9.999 0 00-1.877 7.393l4.922 34.251 8.316 21.993a9.999 9.999 0 009.752 6.455l5.652-.225a10.001 10.001 0 009.543-8.907c.827-6.573 1.733-15.409 1.278-20.874-.807-9.694-2.705-29.872-3.62-39.516z",
+      ],
+      middle: [
+        "M105.585 172.312l3.675-115.763a4.999 4.999 0 014.997-4.841h10.319a5 5 0 014.997 4.835l3.754 113.782",
+        "M138.899 168.375a9.998 9.998 0 00-3.482-7.914l-5.547-4.76a15 15 0 00-19.256-.234l-5.445 4.446a10.004 10.004 0 00-3.645 8.524c.733 9.498 2.322 29.496 3.432 39.052.662 5.69 1.994 16.175 2.959 23.689a10 10 0 009.948 8.738l6.687-.019a9.999 9.999 0 009.794-8.123c1.536-7.348 3.54-17.826 3.564-23.267.047-10.46.685-30.863.991-40.132z",
+      ],
+      ring: [
+        "M142.179 171.059l15.403-103.46a4.999 4.999 0 016.09-4.131l7.72 1.816a5 5 0 013.852 5.035l-3.632 108.116",
+        "M176.527 176.598a10.002 10.002 0 00-2.811-9.123l-6.713-6.567a14.999 14.999 0 00-17.364-2.609l-5.174 2.668a10 10 0 00-5.405 8.385c-.519 9.828-1.464 29.683-1.152 39.155.167 5.071.637 14.639 1.007 21.893a10 10 0 0010.018 9.512l4.814-.015a9.998 9.998 0 009.572-7.208c2.074-6.985 5.064-17.281 6.246-22.534 1.865-8.288 5.243-24.991 6.962-33.557z",
+      ],
+      little: [
+        "M179.955 182.04l26.739-73.594a5 5 0 016.381-3.001l5.127 1.831a5 5 0 013.19 5.833l-19.136 82.947",
+        "M204.441 193.204c.861-2.278.862-4.791.002-7.07l-3.318-8.785a11.072 11.072 0 00-11.294-7.12l-4.961.42a10 10 0 00-8.922 7.816c-2.006 8.944-5.278 23.962-6.383 31.69-.552 3.862-1.216 10.169-1.758 15.694a9.997 9.997 0 009.976 11.053c.785-.001 1.56-.003 2.305-.006a10 10 0 009.076-5.875l5.927-13.09 9.35-24.727z",
+      ],
+    };
+
+    const flipStyle = "scale(-1,1) translateX(-100%)";
+
+    // ====== State ======
+    const state = {
+      hands: [
+        { id:0, isRight:false, fingers: Object.fromEntries(FINGERS.map(f=>[f,{extended:true}])) },
+        { id:1, isRight:true,  fingers: Object.fromEntries(FINGERS.map(f=>[f,{extended:true}])) },
+        { id:2, isRight:false, fingers: Object.fromEntries(FINGERS.map(f=>[f,{extended:true}])) },
+        { id:3, isRight:true,  fingers: Object.fromEntries(FINGERS.map(f=>[f,{extended:true}])) },
+      ]
+    };
+
+    const app = document.getElementById('app');
+
+    const POWS = [3,2,1,0]; // MSB on the left, LSB on the right
+
+    function bitOf(handIndex){
+      // Follow widget 3 mapping: extended -> 0, closed -> 1
+      return state.hands[handIndex].fingers.index.extended ? 0 : 1;
+    }
+
+    function valOf(handIndex){
+      return bitOf(handIndex) * (1 << POWS[handIndex]);
+    }
+
+    function toggleIndex(handIndex){
+      const h = state.hands[handIndex];
+      h.fingers.index.extended = !h.fingers.index.extended;
+      syncHand(handIndex);
+      syncBits();
+    }
+
+    function syncBits(){
+      const wraps = app.children;
+      for(let i=0;i<4;i++){
+        wraps[i].querySelector('.bitval').textContent = String(bitOf(i));
+        wraps[i].querySelector('.prod').textContent   = String(valOf(i));
+      }
+      updateTotal();
+    }
+
+    function updateTotal(){
+      const bits = Array.from({length:4}, (_,i)=>bitOf(i)).join(''); // MSB..LSB
+      const dec  = Array.from({length:4}, (_,i)=>valOf(i)).reduce((a,b)=>a+b,0);
+      document.getElementById('total').innerHTML = `(${bits})<sub>2</sub> = ${dec}`;
+    }
+
+    // ====== Render ======
+    function render(){
+      app.innerHTML = '';
+      state.hands.forEach((h, idx)=> app.appendChild(renderHand(h, idx)));
+      syncBits();
+    }
+
+    function renderHand(hand, handIndex){
+      const colorClass = `h${handIndex}`;
+      const wrap = document.createElement('div');
+      wrap.className = `handwrap ${colorClass}`;
+
+      // Bit line: b × 2^k = value; color the power
+      const bit = document.createElement('div');
+      bit.className = 'bit';
+      bit.innerHTML = `<span class="bitval">0</span> × <span class="power">2<sup>${POWS[handIndex]}</sup></span> = <span class="prod">0</span>`;
+      wrap.appendChild(bit);
+
+      // Hand SVG
+      const svg = el('svg', { class:'hand', viewBox:'0 0 239 360', fillRule:'evenodd', clipRule:'evenodd', strokeLinecap:'round', strokeLinejoin:'round', strokeMiterlimit:'1.5'});
+      const gRoot = el('g');
+      svg.appendChild(gRoot);
+
+      const gHand = el('g');
+      if (hand.isRight) gHand.style.transform = flipStyle;
+
+      // Palm
+      gHand.appendChild(el('path', {
+        d: 'M133.238 167.627l.123 3.721a4.409 4.409 0 004.406 4.262h.002a4.328 4.328 0 004.282-3.692l.525-3.526a121.092 121.092 0 0129.132 7.183l-.183 5.447a4.168 4.168 0 003.022 4.149s0 0 0 0a4.315 4.315 0 005.242-2.676l1.09-2.999a120.634 120.634 0 0122.046 13.658l-1.385 6.004a4.997 4.997 0 00-.129 1.156c.098 20.642 5.002 32.816 5.002 61.573 0 42.834-34.776 77.61-77.61 77.61-21.417 0-40.82-8.694-54.868-22.742-14.048-14.048-22.742-33.451-22.742-54.868 0-17.656 5.908-33.944 15.854-46.989l.361-14.975a4.74 4.74 0 00-.008-.43l-.955-15.4a119.832 119.832 0 0128.617-12.087l.447 2.55a5.001 5.001 0 006.01 4.017l.105-.023a5 5 0 003.912-4.723l.136-4.269c7.224-1.368 14.678-2.064 22.294-2.064l5.272.133z',
+      }));
+
+      // Fingers: only index toggles; others disabled and always up initially (extended)
+      const namesR = FINGERS_R;
+      namesR.forEach((name)=>{
+        const grp = el('g', { class:'finger' });
+        const [closedP, extP] = fingerPaths[name];
+        grp.appendChild(el('path', { d: closedP }));
+        grp.appendChild(el('path', { d: extP }));
+        const isIndex = name === 'index';
+          grp.addEventListener('pointerdown', () => toggleIndex(handIndex));
+        if (!isIndex) {
+          grp.classList.add('disabled');
+        }
+        const ext = isIndex ? state.hands[handIndex].fingers.index.extended : true;
+        grp.classList.toggle('isExtended', ext);
+        grp.classList.toggle('isClosed',  !ext);
+        gHand.appendChild(grp);
+      });
+
+      gRoot.appendChild(gHand);
+      wrap.appendChild(svg);
+      return wrap;
+    }
+
+    function syncHand(handIndex){
+      const wrap = app.children[handIndex];
+      const handEl = wrap.querySelector('svg');
+      const groups = handEl.querySelectorAll('.finger');
+      const namesR = FINGERS_R;
+      groups.forEach((g,i)=>{
+        const name = namesR[i];
+        const ext = (name === 'index') ? state.hands[handIndex].fingers.index.extended : true;
+        g.classList.toggle('isExtended', ext);
+        g.classList.toggle('isClosed',  !ext);
+      });
+    }
+
+    // Element helper: attributes for SVG to avoid read-only property errors
+    function el(tag, attrs={}){
+      const SVG_TAGS = new Set(['svg','path','g','text','circle']);
+      const isSvg = SVG_TAGS.has(tag);
+      const ns = isSvg ? 'http://www.w3.org/2000/svg' : 'http://www.w3.org/1999/xhtml';
+      const n = document.createElementNS(ns, tag);
+      for(const [k,v] of Object.entries(attrs)){
+        if(v == null) continue; n.setAttribute(k, String(v));
+      }
+      return n;
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=IRANSans:wght@400;700&display=swap');
+
+body {
+    font-family: 'IRANSans', sans-serif;
+    direction: rtl;
+    text-align: right;
+    background-color: #F1CF54;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: linear-gradient(to bottom, #ffffff, #e8ebed);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 28px;
+    color: #2c3e50;
+    letter-spacing: 1px;
+}
+
+h3 {
+    text-align: left;
+    margin-bottom: 30px;
+    font-size: 28px;
+    color: #2c3e50;
+    letter-spacing: 1px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #dfe6e9;
+}
+
+.tab {
+    padding: 15px 30px;
+    background-color: #FC6A03;
+    color: white;
+    cursor: pointer;
+    border-radius: 50px 50px 0 0;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.tab:hover {
+    background-color: #E54C44;
+    transform: translateY(-3px);
+}
+
+.tab.active {
+    background-color: #D0312D;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.box {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #F1CF54;
+    color: white;
+    text-align: center;
+    border-radius: 10px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.box:hover {
+    background-color: #F1CF54;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    border: 1px solid #ecf0f1;
+    padding: 15px;
+    text-align: center;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+thead {
+    background-color: #FC94AF   ;
+    color: white;
+    font-size: 18px;
+}
+
+tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+    background-color: #ecf0f1;
+}
+
+input[type="number"], input[type="text"] {
+    width: 90%;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #f4f7f6;
+    transition: box-shadow 0.3s ease;
+}
+
+input[type="number"]:focus, input[type="text"]:focus {
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+input[readonly] {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.action-button {
+    font-family: 'IRANSans', sans-serif;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    margin: 0 10px; /* فاصله بین دکمه‌ها */
+}
+
+.action-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-3px);
+}
+
+table {
+    margin-bottom: 30px;
+}
+
+/* Modal container */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
+}
+
+/* Modal content */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+}
+
+/* Close button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+#page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#round-number-txt {
+    margin-right: 10px;
+}
+

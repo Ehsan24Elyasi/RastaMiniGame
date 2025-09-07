@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بورس اوراق بهادُر</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <div id="page-header">
+        <span id="round-number-txt">شماره‌ی راند: 1</span>
+        <h1>بورس اوراق بهادُر<br/>Bahador Stock Market</h1>
+        <button id="start-round-button" class="action-button">شروع راند</button>
+    </div>
+    <div class="tabs">
+        <button id="buyer-tab" class="tab active">خرید</button>
+        <button id="seller-tab" class="tab">فروش</button>
+        <button id="report-tab" class="tab">سفارشات</button>
+        <button id="history-tab" class="tab">تاریخچه</button>
+        <button id="ranking-tab" class="tab">رنکینگ</button>
+
+    </div>
+
+    <div class="tab-content">
+        <!-- صفحه خریدار -->
+        <div id="buyer-page" class="page active">
+            <div class="box">سفارش خرید</div>
+            <table>
+                <thead>
+                <tr>
+                    <th>قیمت هر سهم</th>
+                    <th>تعداد</th>
+                    <th>قیمت کل</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="number" id="buy-price" oninput="calculateTotal('buy')"></td>
+                    <td><input type="number" step="1" min="0" id="buy-quantity" oninput="calculateTotal('buy')"></td>
+                    <td><input type="text" id="buy-total" readonly></td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="button-container">
+                <button id="buy-button" class="action-button">خرید</button>
+            </div>
+            <div class="box">بودجه</div>
+            <table>
+                <thead>
+                <tr>
+                    <th>بودجه</th>
+                    <th>مقدار باقی مانده</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="text" id="budget" readonly value="5000"></td>
+                    <td><input type="text" id="remaining-budget" readonly value="5000"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- صفحه فروشنده -->
+        <div id="seller-page" class="page">
+            <div class="box">سفارش فروش</div>
+            <table>
+                <thead>
+                <tr>
+                    <th>قیمت هر سهم</th>
+                    <th>تعداد</th>
+                    <th>قیمت کل</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="number" id="sell-price" oninput="calculateTotal('sell')"></td>
+                    <td><input type="number" step="1" min="0" id="sell-quantity" oninput="calculateTotal('sell')"></td>
+                    <td><input type="text" id="sell-total" readonly></td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="button-container">
+                <button id="sell-button" class="action-button">فروش</button>
+            </div>
+            <div class="box">دارایی</div>
+            <table>
+                <thead>
+                <tr>
+                    <th>تعداد</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="text" id="asset-quantity" readonly value="1000"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- صفحه سفارشات -->
+        <div id="report-page" class="page">
+            <div class="box">قیمت پایه در پایان راند</div>
+            <table>
+                <tr>
+                    <th></th>
+                    <th>راند اول</th>
+                    <th>راند دوم</th>
+                    <th>راند سوم</th>
+                    <th>راند چهارم</th>
+                    <th>راند پنجم</th>
+                </tr>
+                <tbody>
+                <tr>
+                    <td>100</td>
+                    <td id="base-price1">-</td>
+                    <td id="base-price2">-</td>
+                    <td id="base-price3">-</td>
+                    <td id="base-price4">-</td>
+                    <td id="base-price5">-</td>
+
+                </tr>
+                </tbody>
+            </table>
+
+            <div id="results-txt" class="box" style="display: none;">سفارشات انجام‌شده</div>
+            <table id="results-table" style="display: none;">
+                <thead>
+                <tr>
+                    <th>خریدار</th>
+                    <th>تعداد</th>
+                    <th>قیمت</th>
+                    <th>قیمت کل</th>
+                    <th>فروشنده</th>
+                </tr>
+                </thead>
+                <tbody id="results-body">
+                <!-- داده‌های گزارش اینجا قرار می‌گیرند -->
+                </tbody>
+            </table>
+            <div class="box">گزارش خرید و فروش</div>
+
+            <table>
+                <thead>
+                <tr>
+                    <th colspan="5" style="color: blue;">گزارش خرید</th>
+                    <th colspan="5" style="color: red;">گزارش فروش</th>
+                </tr>
+                <tr>
+                    <th>کاربر</th>
+                    <th>زمان</th>
+                    <th>تعداد</th>
+                    <th>قیمت</th>
+                    <th>قیمت کل</th>
+                    <th>کاربر</th>
+                    <th>زمان</th>
+                    <th>تعداد</th>
+                    <th>قیمت</th>
+                    <th>قیمت کل</th>
+                </tr>
+                </thead>
+                <tbody id="report-body">
+                <!-- داده‌های گزارش اینجا قرار می‌گیرند -->
+                </tbody>
+            </table>
+        </div>
+        <!-- صفحه تاریخچه -->
+        <div id="history-page" class="page">
+            <div class="box">تاریخچه‌ی سفارشات شما</div>
+            <table>
+                <thead>
+                <tr>
+                    <th>راند</th>
+                    <th>نوع</th>
+                    <th>تعداد</th>
+                    <th>قیمت</th>
+                    <th>قیمت کل</th>
+                </tr>
+                </thead>
+                <tbody id="history-body">
+                <!-- داده‌های گزارش اینجا قرار می‌گیرند -->
+                </tbody>
+            </table>
+        </div>
+          <!-- صفحه رنکينگ -->
+          <div>
+                    <table id="ranking-table" class="page">
+             <thead>
+                 <tr>
+                     <th>نام گروه</th>
+                     <th>امتیاز</th>
+                 </tr>
+             </thead>
+             <tbody id="ranking-body">
+             </tbody>
+         </table>
+         </div>
+     </div>
+    </div>
+    <div id="round-end-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <p id="modal-message">راند به پایان رسید!</p>
+        </div>
+    </div>
+    <div id="popup-container" style="display: none;">
+        <div id="group-popup" class="popup">
+            <input id="group-name-input" type="text" placeholder="نام گروه را وارد کنید" />
+            <button id="confirm-group-name">تایید</button>
+        </div>
+    </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
