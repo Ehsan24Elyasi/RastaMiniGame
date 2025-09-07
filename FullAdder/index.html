@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تأیید منطق جمع‌کننده کامل</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('https://cdn.jsdelivr.net/npm/vazirmatn@33.0.5/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    }
+    #canvas-container canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
+<div id="root"></div>
+<script type="text/babel">
+function FullAdderGame() {
+  const [inputs, setInputs] = React.useState({ a: 0, b: 0, cin: 0 });
+  const [outputs, setOutputs] = React.useState({ sum: 0, cout: 0 });
+  const [truthTable, setTruthTable] = React.useState([]);
+
+  const calculateCorrectOutputs = (a, b, cin) => {
+    const sum = (a ^ b ^ cin);
+    const cout = ((a & b) | (b & cin) | (a & cin));
+    return { sum, cout };
+  };
+
+  const addToTruthTable = () => {
+    const correctOutputs = calculateCorrectOutputs(inputs.a, inputs.b, inputs.cin);
+    const isCorrect = outputs.sum === correctOutputs.sum && outputs.cout === correctOutputs.cout;
+    const newRow = { ...inputs, ...outputs, isCorrect };
+    if (!truthTable.some(row =>
+      row.a === newRow.a && row.b === newRow.b && row.cin === newRow.cin &&
+      row.sum === newRow.sum && row.cout === newRow.cout
+    )) setTruthTable([...truthTable, newRow]);
+  };
+
+  const sketch = (p) => {
+    let scaleFactor;
+    let aBox, bBox, cinBox, sumBox, coutBox;
+
+    function updateBoxes() {
+      const w = p.width;
+      scaleFactor = w / 500;
+      aBox = { x: 30*scaleFactor, y: 90*scaleFactor, size: 40*scaleFactor, value: inputs.a, label: "A" };
+      bBox = { x: 30*scaleFactor, y: 150*scaleFactor, size: 40*scaleFactor, value: inputs.b, label: "B" };
+      cinBox = { x: 30*scaleFactor, y: 210*scaleFactor, size: 40*scaleFactor, value: inputs.cin, label: "Cin" };
+      sumBox = { x: 380*scaleFactor, y: 130*scaleFactor, size: 40*scaleFactor, value: outputs.sum, label: "S" };
+      coutBox = { x: 380*scaleFactor, y: 190*scaleFactor, size: 40*scaleFactor, value: outputs.cout, label: "COUT" };
+    }
+
+    function drawBox(box, side="left") {
+      p.stroke(200);
+      p.fill(box.value ? '#3b82f6' : '#f3f4f6');
+      p.rect(box.x, box.y, box.size, box.size, 10*scaleFactor);
+      p.fill(box.value ? '#fff' : '#374151');
+      p.textSize(14*scaleFactor);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.text(box.value, box.x + box.size/2, box.y + box.size/2);
+      p.fill('#374151');
+      if (side === "left") p.text(box.label, box.x - 18*scaleFactor, box.y + box.size/2);
+      else p.text(box.label, box.x + box.size + 18*scaleFactor, box.y + box.size/2);
+    }
+
+    p.setup = () => {
+      let w = document.getElementById("canvas-container").offsetWidth;
+      p.createCanvas(w, w*0.7);
+      updateBoxes();
+    };
+
+    p.windowResized = () => {
+      let w = document.getElementById("canvas-container").offsetWidth;
+      p.resizeCanvas(w, w*0.7);
+      updateBoxes();
+    };
+
+    p.mouseClicked = () => {
+      [aBox, bBox, cinBox, sumBox, coutBox].forEach((box, idx) => {
+        if (p.mouseX > box.x && p.mouseX < box.x + box.size && p.mouseY > box.y && p.mouseY < box.y + box.size) {
+          if (idx===0) setInputs(prev => ({ ...prev, a: prev.a ^ 1 }));
+          if (idx===1) setInputs(prev => ({ ...prev, b: prev.b ^ 1 }));
+          if (idx===2) setInputs(prev => ({ ...prev, cin: prev.cin ^ 1 }));
+          if (idx===3) setOutputs(prev => ({ ...prev, sum: prev.sum ^ 1 }));
+          if (idx===4) setOutputs(prev => ({ ...prev, cout: prev.cout ^ 1 }));
+        }
+      });
+    };
+
+    p.draw = () => {
+      p.clear();
+      updateBoxes();
+      drawBox(aBox, "left");
+      drawBox(bBox, "left");
+      drawBox(cinBox, "left");
+      drawBox(sumBox, "right");
+      drawBox(coutBox, "right");
+
+      // جعبه جمع‌کننده
+      p.fill('#2563eb');
+      p.noStroke();
+      p.rect(180*scaleFactor, 120*scaleFactor, 140*scaleFactor, 100*scaleFactor, 16*scaleFactor);
+      p.fill('#fff');
+      p.textSize(18*scaleFactor);
+      p.text("جمع‌کننده کامل", 250*scaleFactor, 170*scaleFactor);
+
+      // خطوط
+      p.stroke('#9ca3af');
+      p.strokeWeight(2*scaleFactor);
+
+      // A
+      p.line(aBox.x + aBox.size, aBox.y + 20*scaleFactor, 140*scaleFactor, aBox.y + 20*scaleFactor);
+      p.line(140*scaleFactor, aBox.y + 20*scaleFactor, 140*scaleFactor, 150*scaleFactor);
+      p.line(140*scaleFactor, 150*scaleFactor, 180*scaleFactor, 150*scaleFactor);
+
+      // B
+      p.line(bBox.x + bBox.size, bBox.y + 20*scaleFactor, 140*scaleFactor, bBox.y + 20*scaleFactor);
+      p.line(140*scaleFactor, bBox.y + 20*scaleFactor, 140*scaleFactor, 170*scaleFactor);
+      p.line(140*scaleFactor, 170*scaleFactor, 180*scaleFactor, 170*scaleFactor);
+
+      // Cin
+      p.line(cinBox.x + cinBox.size, cinBox.y + 20*scaleFactor, 140*scaleFactor, cinBox.y + 20*scaleFactor);
+      p.line(140*scaleFactor, cinBox.y + 20*scaleFactor, 140*scaleFactor, 190*scaleFactor);
+      p.line(140*scaleFactor, 190*scaleFactor, 180*scaleFactor, 190*scaleFactor);
+
+      // SUM
+      p.line(320*scaleFactor, 150*scaleFactor, 360*scaleFactor, 150*scaleFactor);
+      p.line(360*scaleFactor, 150*scaleFactor, 360*scaleFactor, sumBox.y + 20*scaleFactor);
+      p.line(360*scaleFactor, sumBox.y + 20*scaleFactor, sumBox.x, sumBox.y + 20*scaleFactor);
+
+      // COUT
+      p.line(320*scaleFactor, 190*scaleFactor, 360*scaleFactor, 190*scaleFactor);
+      p.line(360*scaleFactor, 190*scaleFactor, 360*scaleFactor, coutBox.y + 20*scaleFactor);
+      p.line(360*scaleFactor, coutBox.y + 20*scaleFactor, coutBox.x, coutBox.y + 20*scaleFactor);
+    };
+  };
+
+  React.useEffect(() => {
+    const myP5 = new p5(sketch, document.getElementById('canvas-container'));
+    return () => myP5.remove();
+  }, [inputs, outputs]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 space-y-6">
+      <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800">تأیید منطق جمع‌کننده کامل</h1>
+      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-6xl">
+        <div className="bg-white p-6 rounded-2xl shadow-md w-full lg:w-1/2">
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">📊 جدول درستی</h2>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full text-center text-sm md:text-base">
+              <thead className="bg-gray-100 text-gray-600">
+                <tr>
+                  <th className="p-2">A</th>
+                  <th className="p-2">B</th>
+                  <th className="p-2">Cin</th>
+                  <th className="p-2">S</th>
+                  <th className="p-2">COUT</th>
+                  <th className="p-2">وضعیت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {truthTable.length === 0 ? (
+                  <tr><td colSpan="6" className="p-4 text-gray-400">هنوز داده‌ای ثبت نشده</td></tr>
+                ) : (
+                  truthTable.map((row, i) => (
+                    <tr key={i} className={row.isCorrect ? 'bg-green-50' : 'bg-red-50'}>
+                      <td className="p-2">{row.a}</td>
+                      <td className="p-2">{row.b}</td>
+                      <td className="p-2">{row.cin}</td>
+                      <td className="p-2">{row.sum}</td>
+                      <td className="p-2">{row.cout}</td>
+                      <td className="p-2">{row.isCorrect ? '✅ درست' : '❌ غلط'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-md w-full lg:w-1/2 flex flex-col">
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">⚡ نمایش مدار</h2>
+          <div id="canvas-container" className="mb-4 border rounded-lg overflow-hidden bg-gray-50"></div>
+          <button
+            onClick={addToTruthTable}
+            className="mt-auto bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition"
+          >
+            اضافه به جدول درستی
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<FullAdderGame />);
+</script>
+</body>
+</html>

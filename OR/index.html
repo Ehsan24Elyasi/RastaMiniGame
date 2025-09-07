@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OR Gate – Truth Table & Circuit</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Vazir";
+        src: url("https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.woff")
+          format("woff");
+        font-display: swap;
+      }
+
+      /* Fluid type scale + box sizes */
+      :root {
+        --fs-base: clamp(13px, 0.9vw + 0.25rem, 18px);
+        --fs-lg: calc(var(--fs-base) * 1.125);
+
+        --box-w: clamp(220px, 90vw, 300px);
+        --box-h: clamp(300px, 70vh, 400px);
+        --radius: 14px;
+        --shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+      }
+      @media (min-width: 640px) {
+        :root {
+          --box-w: 280px;
+          --box-h: 420px;
+        }
+      }
+      @media (min-width: 768px) {
+        :root {
+          --box-w: 320px;
+          --box-h: 450px;
+        }
+      }
+      @media (min-width: 1024px) {
+        :root {
+          --box-w: 340px;
+          --box-h: 480px;
+        }
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: #fff;
+        font-family: Vazir, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, sans-serif;
+        font-size: var(--fs-base);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+      }
+
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        max-width: 1100px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+      @media (min-width: 768px) {
+        .wrap {
+          flex-direction: row;
+          flex-wrap: nowrap;
+          gap: 20px;
+        }
+      }
+
+      .box {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .card {
+        width: var(--box-w);
+        height: var(--box-h);
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0 2px;
+      }
+
+      .card-head {
+        padding: 10px 14px;
+        text-align: center;
+        font-size: var(--fs-lg);
+        border-bottom: 1px solid #eee;
+      }
+
+      .card-body {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      /* schematic */
+      .schematic-inner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      .schematic-img {
+        width: calc(var(--box-w) * 0.75);
+        max-width: 90%;
+        height: auto;
+        display: block;
+      }
+
+      /* p5 canvases fill card */
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" dir="ltr">
+
+      <!-- Schematic -->
+      <div class="box" dir="rtl">
+        <div class="card">
+          <div class="card-head">شماتیک گیت OR</div>
+          <div class="card-body">
+            <div class="schematic-inner">
+              <img class="schematic-img" src="OR.png" alt="OR Gate" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Circuit -->
+      <div class="box" dir="rtl">
+        <div class="card">
+          <div class="card-head">مدار تعاملی</div>
+          <div class="card-body">
+            <div id="circuit" style="width: 100%; height: 100%"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Truth table -->
+      <div class="box" dir="rtl">
+        <div class="card">
+          <div class="card-head">جدول درستی گیت OR</div>
+          <div class="card-body">
+            <div id="truth-table" style="width: 100%; height: 100%"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      // ====== shared helpers ======
+      function fitToParentCanvas(p, parentId, baseW = 320, baseH = 450) {
+        const el = document.getElementById(parentId);
+        const r = el.getBoundingClientRect();
+        const w = Math.max(10, Math.floor(r.width));
+        const h = Math.max(10, Math.floor(r.height));
+        if (p._renderer) p.resizeCanvas(w, h);
+        const sx = w / baseW,
+          sy = h / baseH;
+        const s = Math.min(sx, sy);
+        const ox = (w - baseW * s) / 2;
+        const oy = (h - baseH * s) / 2;
+        return { s, ox, oy, w, h, baseW, baseH };
+      }
+
+      // ====== Truth table data (OR) ======
+      let table = [
+        { i1: 0, i2: 0, o: 0 },
+        { i1: 0, i2: 1, o: 0 },
+        { i1: 1, i2: 0, o: 0 },
+        { i1: 1, i2: 1, o: 0 },
+      ];
+      let results = [false, false, false, false];
+
+      // ========= Truth table sketch (responsive) =========
+      (function setupTruthTable() {
+        const sketch = function (p) {
+          const BASE_W = 320,
+            BASE_H = 450;
+          let view = { s: 1, ox: 0, oy: 0 };
+
+          // logical layout
+          const startY = 60,
+            rowGap = 60,
+            cellW = 40,
+            cellH = 40;
+          const c1 = 60,
+            c2 = c1 + 70,
+            c3 = c2 + 70,
+            c4 = c3 + 70;
+
+          p.setup = function () {
+            const r = document
+              .getElementById("truth-table")
+              .getBoundingClientRect();
+            p.createCanvas(r.width || BASE_W, r.height || BASE_H);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textFont("Vazir");
+          };
+
+          p.windowResized = function () {
+            view = fitToParentCanvas(p, "truth-table", BASE_W, BASE_H);
+          };
+
+          p.draw = function () {
+            view = fitToParentCanvas(p, "truth-table", BASE_W, BASE_H);
+            p.clear();
+            p.background(255);
+
+            p.push();
+            p.translate(view.ox, view.oy);
+            p.scale(view.s);
+
+            // headers
+            p.textSize(18);
+            p.fill(0);
+            p.text("ورودی ۱", c1, startY - 25);
+            p.text("ورودی ۲", c2, startY - 25);
+            p.text("خروجی", c3, startY - 25);
+            p.text("نتیجه", c4, startY - 25);
+
+            // column separators
+            const yTop = startY - 35;
+            const yBot = startY + 3 * rowGap + cellH + 10;
+            p.stroke(180);
+            p.strokeWeight(1);
+            p.line((c1 + c2) / 2, yTop, (c1 + c2) / 2, yBot);
+            p.line((c2 + c3) / 2, yTop, (c2 + c3) / 2, yBot);
+            p.line((c3 + c4) / 2, yTop, (c3 + c4) / 2, yBot);
+
+            // rows
+            for (let i = 0; i < table.length; i++) {
+              const y = startY + i * rowGap;
+
+              // input1
+              p.noStroke();
+              p.fill(
+                table[i].i1 ? p.color(46, 204, 113) : p.color(242, 80, 58)
+              );
+              p.rect(c1 - cellW / 2, y, cellW, cellH, 10);
+              p.fill(255);
+              p.textSize(16);
+              p.text(table[i].i1, c1, y + cellH / 2);
+
+              // input2
+              p.noStroke();
+              p.fill(
+                table[i].i2 ? p.color(46, 204, 113) : p.color(242, 80, 58)
+              );
+              p.rect(c2 - cellW / 2, y, cellW, cellH, 10);
+              p.fill(255);
+              p.text(table[i].i2, c2, y + cellH / 2);
+
+              // output (toggle)
+              const outVal = table[i].o;
+              p.stroke(outVal ? p.color(46, 204, 113) : p.color(242, 80, 58));
+              p.strokeWeight(2);
+              p.fill(255);
+              p.rect(c3 - cellW / 2, y, cellW, cellH, 10);
+              p.noStroke();
+              p.fill(0);
+              p.text(outVal, c3, y + cellH / 2);
+
+              // result
+              const expected = table[i].i1 | table[i].i2;
+              results[i] = outVal === expected;
+              p.textSize(22);
+              p.fill(results[i] ? p.color(46, 204, 113) : p.color(242, 80, 58));
+              p.text(results[i] ? "✅" : "❌", c4, y + cellH / 2);
+            }
+
+            const allValid =
+              table[0].o === 0 &&
+              table[1].o === 1 &&
+              table[2].o === 1 &&
+              table[3].o === 1;
+            p.textSize(16);
+            p.fill(allValid ? p.color(46, 204, 113) : p.color(242, 80, 58));
+            p.text(
+              allValid ? "پاسخ درست است" : "پاسخ نادرست است",
+              (c2 + c3) / 2,
+              350
+            );
+
+            p.pop();
+          };
+
+          p.mousePressed = function () {
+            // unscale mouse to logical coords
+            const viewNow = view; // capture
+            const mx = (p.mouseX - viewNow.ox) / viewNow.s;
+            const my = (p.mouseY - viewNow.oy) / viewNow.s;
+
+            for (let i = 0; i < table.length; i++) {
+              const x0 = c3 - cellW / 2;
+              const y0 = startY + i * rowGap;
+              if (mx > x0 && mx < x0 + cellW && my > y0 && my < y0 + cellH) {
+                table[i].o = 1 - table[i].o;
+              }
+            }
+          };
+        };
+        new p5(sketch, "truth-table");
+      })();
+
+      // ========= Circuit sketch (responsive) =========
+      (function setupCircuit() {
+        const sketch = function (p) {
+          const BASE_W = 320,
+            BASE_H = 450;
+          let view = { s: 1, ox: 0, oy: 0 };
+          let switch1On = false;
+          let switch2On = false;
+
+          p.setup = function () {
+            const r = document
+              .getElementById("circuit")
+              .getBoundingClientRect();
+            p.createCanvas(r.width || BASE_W, r.height || BASE_H);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textSize(16);
+            p.textFont("Vazir");
+          };
+
+          p.windowResized = function () {
+            view = fitToParentCanvas(p, "circuit", BASE_W, BASE_H);
+          };
+
+          p.draw = function () {
+            view = fitToParentCanvas(p, "circuit", BASE_W, BASE_H);
+            p.clear();
+            p.background(255);
+
+            p.push();
+            p.translate(view.ox, view.oy);
+            p.scale(view.s);
+
+            drawCircuit();
+
+            p.pop();
+          };
+
+          function drawCircuit() {
+            // logical coordinates
+            const centerX = 160;
+            const centerY = 200;
+            const circuitWidth = 240;
+            const circuitHeight = 120;
+
+            const topWireY = centerY - circuitHeight / 2;
+            const bottomWireY = centerY + circuitHeight / 2;
+            const leftWireX = centerX - circuitWidth / 2;
+            const rightWireX = centerX + circuitWidth / 2;
+
+            const switchBoxX_left = centerX - circuitWidth / 4;
+            const switchBoxX_right = centerX + circuitWidth / 4;
+            const switchYTop = centerY - circuitHeight / 2;
+            const switchYBottom = centerY - circuitHeight / 2 + 30;
+
+            p.stroke(0);
+            p.strokeWeight(3);
+            p.noFill();
+
+            // frame
+            p.line(leftWireX, topWireY, switchBoxX_left, topWireY);
+            p.line(switchBoxX_right, topWireY, rightWireX, topWireY);
+            p.line(leftWireX, bottomWireY, centerX, bottomWireY);
+            p.line(centerX, bottomWireY, rightWireX, bottomWireY);
+            p.line(leftWireX, topWireY, leftWireX, bottomWireY);
+            p.line(rightWireX, topWireY, rightWireX, bottomWireY);
+
+            // battery left
+            drawBattery(leftWireX, centerY);
+
+            // lamp bottom center
+            drawBulb(centerX, bottomWireY, switch1On || switch2On);
+
+            // vertical connectors for parallel branch
+            p.line(switchBoxX_left, topWireY, switchBoxX_left, switchYBottom);
+            p.line(switchBoxX_right, topWireY, switchBoxX_right, switchYBottom);
+
+            // branch 1
+            const mid1 = (switchBoxX_left + switchBoxX_right) / 2;
+            p.line(switchBoxX_left, switchYTop, mid1 - 15, switchYTop);
+            p.line(mid1 + 15, switchYTop, switchBoxX_right, switchYTop);
+            drawSwitchArm(mid1, switchYTop, switch1On);
+            drawSwitchTerminals(mid1, switchYTop, "A");
+
+            // branch 2
+            const mid2 = (switchBoxX_left + switchBoxX_right) / 2;
+            p.line(switchBoxX_left, switchYBottom, mid2 - 15, switchYBottom);
+            p.line(mid2 + 15, switchYBottom, switchBoxX_right, switchYBottom);
+            drawSwitchArm(mid2, switchYBottom, switch2On);
+            drawSwitchTerminals(mid2, switchYBottom, "B");
+          }
+
+          function drawBattery(x, yCenter) {
+            p.push();
+            p.translate(x, yCenter);
+            p.stroke(0);
+            p.strokeWeight(4);
+            p.line(-20, -5, 20, -5);
+            p.strokeWeight(3);
+            p.line(-10, 5, 10, 5);
+            p.noStroke();
+            p.fill(0);
+            p.textSize(10);
+            p.text("باتری", 35, 10);
+            p.pop();
+          }
+
+          function drawBulb(x, y, on) {
+            p.push();
+            p.translate(x, y);
+            p.stroke(0);
+            p.strokeWeight(2);
+            p.fill(on ? p.color(255, 255, 0) : 255);
+            p.ellipse(0, 0, 30, 30);
+            p.stroke(on ? p.color(255, 150, 0) : 0);
+            p.strokeWeight(on ? 2 : 1);
+            p.line(-6, -6, 6, 6);
+            p.line(-6, 6, 6, -6);
+            p.noStroke();
+            p.fill(0);
+            p.textSize(10);
+            p.text("لامپ", 20, 15);
+            p.pop();
+          }
+
+          function drawSwitchTerminals(x, y, label) {
+            p.push();
+            p.translate(x, y);
+            p.stroke(0);
+            p.strokeWeight(3);
+            p.ellipse(-15, 0, 5, 5);
+            p.ellipse(15, 0, 5, 5);
+            p.noStroke();
+            p.fill(0);
+            p.textSize(10);
+            p.textAlign(p.CENTER);
+            p.text(label, 0, 20);
+            p.pop();
+          }
+
+          function drawSwitchArm(x, y, isOn) {
+            p.push();
+            p.translate(x, y);
+            if (isOn) {
+              p.stroke(0, 150, 0);
+              p.strokeWeight(4);
+              p.line(-15, 0, 15, 0);
+            } else {
+              p.stroke(255, 0, 0);
+              p.strokeWeight(3);
+              p.line(-15, 0, 10, -12);
+            }
+            p.pop();
+          }
+
+          function handlePress(p) {
+            // unscale for hit test
+            const mx = (p.mouseX - view.ox) / view.s;
+            const my = (p.mouseY - view.oy) / view.s;
+
+            const centerX = 160;
+            const circuitWidth = 240;
+            const circuitHeight = 120;
+            const switchBoxX_left = centerX - circuitWidth / 4;
+            const switchBoxX_right = centerX + circuitWidth / 4;
+            const switchYTop = 200 - circuitHeight / 2;
+            const switchYBottom = 200 - circuitHeight / 2 + 30;
+            const midX = (switchBoxX_left + switchBoxX_right) / 2;
+
+            const d1 = Math.hypot(mx - midX, my - switchYTop);
+            const d2 = Math.hypot(mx - midX, my - switchYBottom);
+
+            if (d1 < 20) switch1On = !switch1On;
+            if (d2 < 20) switch2On = !switch2On;
+          }
+
+          let handledTouch = false;
+
+          p.touchStarted = function () {
+            handlePress(p);
+            handledTouch = true; // suppress the follow-up mousePressed
+            return false; // prevent default scrolling/click synthesis
+          };
+
+          p.touchEnded = function () {
+            // allow next interaction
+            handledTouch = false;
+          };
+
+          p.mousePressed = function () {
+            if (handledTouch || p.touches.length) return; // ignore duplicate from touch
+            handlePress(p);
+          };
+        };
+        new p5(sketch, "circuit");
+      })();
+    </script>
+  </body>
+</html>
